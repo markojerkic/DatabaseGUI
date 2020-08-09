@@ -13,15 +13,14 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DatabaseGUI {
 
-
+    // Google Firebase variables
     private FileInputStream inputStream;
     private GoogleCredentials googleCredentials;
     private FirebaseOptions firebaseOptions;
@@ -61,28 +60,43 @@ public class DatabaseGUI {
     private JRadioButton ansType;
     private JRadioButton ansLong;
 
+    // Answer buttons
     private ButtonGroup buttonGroup;
     private JRadioButton ansARadio;
     private JRadioButton ansBRadio;
     private JRadioButton ansCRadio;
     private JRadioButton ansDRadio;
 
+    // Menu variables
     private JMenuBar menuBar;
     private JMenu mainMenu;
     private JMenuItem exitMenuItem;
     private JMenuItem submitMenuItem;
 
+    /*
+    Type of answer - ABCD (multiple choice), type your answer and show your work
+    When the user has to type their own answer, we can just compare it to a string,
+    while when the answer is "show your work", we cannot easily check if the answer is correct.
+    In this case we will have to just show an image of a correct procedure and we'll let the user decide
+    if their work is correct.
+     */
     private int answerType = 0;
     private boolean imageAdded = false;
     private String imageURI;
 
-    private String[] SUBJECTS = new String[] {"Matematika - Viša Razina", "Matematika - Osnovna Razina"};
+    // Subjects and years - the most basic categories by which the users will search the questions
+    // The subjects are read from a local CSV file, while the years are stored in an array, at least for now
+    private String[] subjects;
     private String[] YEARS = new String[] {"2019./20.", "2018./19.", "2017./28."};
 
     public DatabaseGUI() {
 
+        // Read the available subjects from a local CSV file
+        subjects = getSubjects();
+
+        // Getting the admin Firebase credentials as shown in official tutorial
         try {
-            inputStream = new FileInputStream("C:\\Users\\marko\\Documents\\admin_sdk.json");
+            inputStream = new FileInputStream("C:\\Users\\marko\\Documents\\DatabaseGUIAdmin\\admin_sdk.json");
             googleCredentials = GoogleCredentials.fromStream(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
@@ -92,24 +106,28 @@ public class DatabaseGUI {
         FirebaseApp.initializeApp(firebaseOptions);
         firestore = FirestoreClient.getFirestore();
 
-
+        // Setting the main frame
         frame = new JFrame("Test");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        // The top pannel
         JPanel panelTop = new JPanel();
 
+        // Added a menu bar, as it is the easiest way to add keyboard shortcuts in Swing in my experience
         menuBar = new JMenuBar();
         mainMenu = new JMenu("Menu");
         mainMenu.setMnemonic(KeyEvent.VK_M);
         menuBar.add(mainMenu);
+        // Exit button, accesed by the shortcut crt + Q
         exitMenuItem = new JMenuItem("Exit");
         exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
         exitMenuItem.addActionListener(e -> {
+            // Shutdown the main frame and exit the java app
             frame.dispose();
             System.exit(0);
         });
 
-        // Submit enetry
+        // Submit enetry menu item
         submitMenuItem = new JMenuItem("Predaj");
         submitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.CTRL_MASK));
         submitMenuItem.addActionListener(e -> submit());
@@ -118,10 +136,11 @@ public class DatabaseGUI {
         mainMenu.add(submitMenuItem);
         mainMenu.add(exitMenuItem);
 
-        label = new JLabel("Test");
+        // Label and text field for adding the question
         questionLabel = new JLabel("Pitanje");
         questionEntry = new JTextField();
 
+        // Labels and the text fields of the answers - A through D
         answerALabel = new JLabel("Odgovor A:");
         answerAEntry = new JTextField();
         answerBLabel = new JLabel("Odgovor B");
@@ -131,6 +150,8 @@ public class DatabaseGUI {
         answerDLabel = new JLabel("Odgovor D");
         answerDEntry = new JTextField();
 
+        // Button group for choosing the correct answer
+        // Each button has been asigned a keyboard shortcut
         buttonGroup = new ButtonGroup();
         ansARadio = new JRadioButton("A");
         ansARadio.setMnemonic(KeyEvent.VK_A);
@@ -145,7 +166,13 @@ public class DatabaseGUI {
         buttonGroup.add(ansCRadio);
         buttonGroup.add(ansDRadio);
 
-        // Define type of answer
+        /*
+        Define type of answer
+        Three types of answers: ABCD (multiple choice), type your own answer, and show your work
+        When the "type your own answer" is picked, then only answer A is submitted to the database
+        "Show your work" category is not yet finished
+        */
+
         typeOfAnswerGroup = new ButtonGroup();
         ansABCD = new JRadioButton("ABCD");
         ansABCD.setMnemonic(KeyEvent.VK_1);
@@ -158,21 +185,28 @@ public class DatabaseGUI {
         typeOfAnswerGroup.add(ansLong);
         ansABCD.setSelected(true);
 
+        // Label and button for adding a photo for the question
+        // The photo can be used as the question or th answer
         addPicatureButton = new JButton("Dodaj sliku");
         picatureLabel = new JLabel();
+
+        // Labels and combo boxes for choosing the year and the subject of the question
         subjectLabel = new JLabel("Predmet");
-        subjectEntry = new JTextField();
         yearLabel = new JLabel("Godina");
-        yearEntry = new JTextField();
         // Combo boxes
-        subjectComboBox = new JComboBox<>(SUBJECTS);
+        subjectComboBox = new JComboBox<>(subjects);
         yearComboBox = new JComboBox<>(YEARS);
 
+        // Top panel is set in a grid bag layout
         GridBagLayout layoutTop = new GridBagLayout();
         panelTop.setLayout(layoutTop);
         layoutTop.columnWeights = new double[]{0, 0};
+
+        // The constrains are initialised once, but are updated before adding each element, as most
+        // share a lot of features, only having slight differences which are defined later
         constraints = new GridBagConstraints();
 
+        // Deffining the positions of the question label and text field
         constraints = getConstrains(0, 0, 1);
         constraints.anchor = GridBagConstraints.NORTHWEST;
         panelTop.add(questionLabel, constraints);
@@ -284,6 +318,23 @@ public class DatabaseGUI {
         frame.add(panelBottom, BorderLayout.PAGE_END);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    private String[] getSubjects() {
+        ArrayList<String> res = new ArrayList<>();
+        String path = "C:\\Users\\marko\\Documents\\DatabaseGUIAdmin\\subjects.csv";
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+            String line = reader.readLine();
+            if (line != null) {
+                String[] temp = line.split(",");
+                return temp;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+
     }
 
     private void submit() {
