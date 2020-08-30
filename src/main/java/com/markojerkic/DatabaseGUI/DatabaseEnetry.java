@@ -1,5 +1,6 @@
 package com.markojerkic.DatabaseGUI;
 
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
 public class DatabaseEnetry {
@@ -11,11 +12,11 @@ public class DatabaseEnetry {
     private String ansC;
     private String ansD;
     private int correctAns;
-    private String imageURI;
+    private BufferedImage img;
     private int typeOfAnswer;
 
     public DatabaseEnetry(String subject, String year, String question, String ansA, String ansB, String ansC,
-                          String ansD, int correctAns, String imageURI, int typeOfAnswer) {
+                          String ansD, int correctAns, BufferedImage img, int typeOfAnswer) {
         this.subject = subject;
         this.year = year;
         this.question = question;
@@ -24,8 +25,16 @@ public class DatabaseEnetry {
         this.ansC = ansC;
         this.ansD = ansD;
         this.correctAns = correctAns;
-        this.imageURI = imageURI;
+        this.img = img;
         this.typeOfAnswer = typeOfAnswer;
+    }
+
+    public BufferedImage getImg() {
+        return this.img;
+    }
+
+    public String getQuestion() {
+        return this.question;
     }
 
     public HashMap<String, Object> toMap() {
@@ -38,7 +47,7 @@ public class DatabaseEnetry {
         map.put("ansC", this.ansC);
         map.put("ansD", this.ansD);
         map.put("correctAns", this.correctAns);
-        map.put("imageURI", this.imageURI);
+        map.put("imageURI", this.img.toString());
         map.put("typeOfAnswer", this.typeOfAnswer);
 
         return map;

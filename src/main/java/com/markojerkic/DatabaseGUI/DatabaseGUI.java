@@ -2,9 +2,11 @@ package com.markojerkic.DatabaseGUI;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.storage.Bucket;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.firebase.cloud.StorageClient;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -14,7 +16,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,6 +26,7 @@ public class DatabaseGUI {
     private GoogleCredentials googleCredentials;
     private FirebaseOptions firebaseOptions;
     private Firestore firestore;
+    private Bucket bucket;
 
     private JFrame frame;
     private JLabel label;
@@ -107,10 +109,15 @@ public class DatabaseGUI {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        firebaseOptions = new FirebaseOptions.Builder().setCredentials(googleCredentials)
-                .setDatabaseUrl("https://drzavna-matura-1fbe7.firebaseio.com").build();
+        firebaseOptions = new FirebaseOptions.Builder()
+                .setCredentials(googleCredentials)
+                .setDatabaseUrl("https://drzavna-matura-1fbe7.firebaseio.com")
+                .setStorageBucket("drzavna-matura-1fbe7.appspot.com")
+                .build();
         FirebaseApp.initializeApp(firebaseOptions);
         firestore = FirestoreClient.getFirestore();
+        // Bucket for firebase storage to upload images
+        bucket = StorageClient.getInstance().bucket();
 
         // Setting the main frame
         frame = new JFrame("Test");
@@ -327,9 +334,16 @@ public class DatabaseGUI {
             try {
                 BufferedImage img = ImageIO.read(fc.getSelectedFile());
                 Dimension dim = choosePhotoUploadDimensions(img, 1200);
+                // Resize the image
                 Image i = img.getScaledInstance(dim.width, dim.height, Image.SCALE_SMOOTH);
-                chosenBufferedImage = (BufferedImage) i;
-                ImageIcon icn = new ImageIcon(i);
+                chosenBufferedImage = new BufferedImage(dim.width, dim.height,
+                BufferedImage.TYPE_INT_RGB);
+
+                Graphics2D g2d = chosenBufferedImage.createGraphics();
+                g2d.drawImage(i, 0, 0, null);
+                g2d.dispose();
+
+                ImageIcon icn = new ImageIcon(chosenBufferedImage);
                 showImage(icn);
                 imageAdded = true;
                 imageURI = fc.getSelectedFile().getAbsolutePath();
@@ -398,14 +412,11 @@ public class DatabaseGUI {
         nWidth = max;
         nHeight = (int) (nWidth / ratio);
 
-        if (nHeight <= max)
-            return new Dimension(nWidth, nHeight);
-        return null;
+        return new Dimension(nWidth, nHeight);
 
     }
 
     private String[] getSubjects() {
-        ArrayList<String> res = new ArrayList<>();
         String path = "C:\\Users\\marko\\Documents\\DatabaseGUIAdmin\\subjects.csv";
         try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
             String line = reader.readLine();
@@ -422,25 +433,34 @@ public class DatabaseGUI {
     }
 
     private void submit() {
-        System.out.println("Predano");
+        // Create an instance of the DataEntry class
         DatabaseEnetry entry = new DatabaseEnetry(getSubject(), getYear(), questionEntry.getText(),
                 answerAEntry.getText(), answerBEntry.getText(), answerCEntry.getText(), answerDEntry.getText(),
-                getCorrectAns(), getImage(), answerType);
+                getCorrectAns(), chosenBufferedImage, answerType);
+        // Get a hash map of the entry
         HashMap<String, Object> map = entry.toMap();
-        System.out.println(map.toString());
+/*
+        // Save chosen image as png
+        if (showImageState == ImageChooseState.APPROVED && imageAdded) {
+            try {
+                ImageIO.write(chosenBufferedImage, "png", new File("slika.png"));
 
-        //WriteToFileTest.write(map);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }*/
 
+        // Reset all the fields
         questionEntry.setText("");
         answerAEntry.setText("");
         answerBEntry.setText("");
         answerCEntry.setText("");
         answerDEntry.setText("");
-        picatureLabel.setIcon(null);
         imageAdded = false;
         buttonGroup.clearSelection();
 
-        SwingWorkerUploader swingWorkerUploader = new SwingWorkerUploader(entry, firestore);
+        // Create an instance of swing worker which will upload the entry to the Firebase database
+        SwingWorkerUploader swingWorkerUploader = new SwingWorkerUploader(entry, firestore, bucket);
         swingWorkerUploader.execute();
     }
 
