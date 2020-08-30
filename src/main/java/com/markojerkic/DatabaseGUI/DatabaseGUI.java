@@ -72,6 +72,7 @@ public class DatabaseGUI {
     private JMenu mainMenu;
     private JMenuItem exitMenuItem;
     private JMenuItem submitMenuItem;
+    private JMenuItem addPhotoMenuItem;
 
     /*
     Type of answer - ABCD (multiple choice), type your answer and show your work
@@ -88,6 +89,11 @@ public class DatabaseGUI {
     // The subjects are read from a local CSV file, while the years are stored in an array, at least for now
     private String[] subjects;
     private String[] YEARS = new String[] {"2019./20.", "2018./19.", "2017./28."};
+
+    // Image state can be approved,disapprovedd and choosing
+    // If an image is chosen than it is stored in chosenBufferedImage
+    private ImageChooseState showImageState = ImageChooseState.CHOOSING;
+    private BufferedImage chosenBufferedImage;
 
     public DatabaseGUI() {
 
@@ -132,8 +138,14 @@ public class DatabaseGUI {
         submitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.CTRL_MASK));
         submitMenuItem.addActionListener(e -> submit());
 
+        // Add photo menu intem
+        addPhotoMenuItem = new JMenuItem("Dodaj sliku");
+        addPhotoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
+        addPhotoMenuItem.addActionListener(e -> choosePhoto());
+
         // Add menu items to the main menu
         mainMenu.add(submitMenuItem);
+        mainMenu.add(addPhotoMenuItem);
         mainMenu.add(exitMenuItem);
 
         // Label and text field for adding the question
@@ -206,7 +218,7 @@ public class DatabaseGUI {
         // share a lot of features, only having slight differences which are defined later
         constraints = new GridBagConstraints();
 
-        // Deffining the positions of the question label and text field
+        // Defining the positions of the question label and text field
         constraints = getConstrains(0, 0, 1);
         constraints.anchor = GridBagConstraints.NORTHWEST;
         panelTop.add(questionLabel, constraints);
@@ -267,22 +279,7 @@ public class DatabaseGUI {
         //panelAddPicature.add(picatureLabel);
 
         addPicatureButton.addActionListener(e -> {
-            JFileChooser fc = new JFileChooser(new File("c:\\Users\\Marko\\Pictures"));
-            int returnVal = fc.showOpenDialog(frame);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                System.out.println(fc.getSelectedFile().getName());
-                try {
-                    BufferedImage img = ImageIO.read(fc.getSelectedFile());
-                    Image i = img.getScaledInstance(100, 100, Image.SCALE_AREA_AVERAGING);
-                    ImageIcon icn = new ImageIcon(i);
-                    picatureLabel.setIcon(icn);
-                    imageAdded = true;
-                    imageURI = fc.getSelectedFile().getAbsolutePath();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            }
+            choosePhoto();
         });
         panelAddPicature.add(addPicatureButton);
 
@@ -318,6 +315,93 @@ public class DatabaseGUI {
         frame.add(panelBottom, BorderLayout.PAGE_END);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    // Open a JFileChooser window in which the user will choose which picture he wants to upload
+    private void choosePhoto() {
+        JFileChooser fc = new JFileChooser(new File("c:\\Users\\Marko\\Pictures"));
+        int returnVal = fc.showOpenDialog(frame);
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            System.out.println(fc.getSelectedFile().getName());
+            try {
+                BufferedImage img = ImageIO.read(fc.getSelectedFile());
+                Dimension dim = choosePhotoUploadDimensions(img, 1200);
+                Image i = img.getScaledInstance(dim.width, dim.height, Image.SCALE_SMOOTH);
+                chosenBufferedImage = (BufferedImage) i;
+                ImageIcon icn = new ImageIcon(i);
+                showImage(icn);
+                imageAdded = true;
+                imageURI = fc.getSelectedFile().getAbsolutePath();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
+
+    // Creates a new JFrame in which the photo will be shown
+    // and the user will choose if he wants to upload it
+    private void showImage(ImageIcon icon) {
+        JFrame imageFrame = new JFrame("Image");
+        imageFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JPanel nPanel = new JPanel();
+        imageFrame.add(nPanel);
+
+        // Create label for the icon
+        JLabel showImageLabel = new JLabel();
+        showImageLabel.setIcon(icon);
+        nPanel.add(showImageLabel);
+
+        // Create menu for quick confirm action
+        JMenuBar showImageMenuBar = new JMenuBar();
+        JMenu showImageMenu = new JMenu("Menu");
+        showImageMenuBar.add(showImageMenu);
+        // Menu item for approval
+        JMenuItem confirm = new JMenuItem("Potvrdi");
+        confirm.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.CTRL_MASK));
+        // If the item is chosen, then the state field is switched to APPROVE and the frame is closed
+        confirm.addActionListener(e -> {
+            System.out.println("Approved");
+            showImageState = ImageChooseState.APPROVED;
+            imageFrame.dispose();
+        });
+        // Menu item for disapproval
+        JMenuItem disapprove = new JMenuItem("Otkazi");
+        disapprove.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.CTRL_MASK));
+        disapprove.addActionListener(e -> {
+            System.out.println("Nooooooooope");
+            showImageState = ImageChooseState.DISAPPROVE;
+            imageFrame.dispose();
+        });
+
+        // Add items to the menu
+        showImageMenu.add(confirm);
+        showImageMenu.add(disapprove);
+
+        // Pack and show the frame
+        imageFrame.setJMenuBar(showImageMenuBar);
+        imageFrame.pack();
+        imageFrame.getContentPane().add(BorderLayout.CENTER, nPanel);
+        imageFrame.setLocationByPlatform(true);
+        imageFrame.setVisible(true);
+    }
+
+    // Choose dimension
+    // Scale the image so that width and height don't surpass the maximum which is passed
+    private Dimension choosePhotoUploadDimensions(BufferedImage img, int max) {
+        int height = img.getHeight();
+        int width = img.getWidth();
+        // Ratio of width to height which will be used to scale the image properly
+        double ratio = width / height;
+        // New values for width and height which will be calculated
+        int nWidth, nHeight;
+        nWidth = max;
+        nHeight = (int) (nWidth / ratio);
+
+        if (nHeight <= max)
+            return new Dimension(nWidth, nHeight);
+        return null;
+
     }
 
     private String[] getSubjects() {

@@ -14,3 +14,9 @@ dependencies {
 
     compile 'com.google.firebase:firebase-admin:6.15.0'
 }
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.markojerkic.DatabaseGUI.DatabaseGUI'
+    }
+}
