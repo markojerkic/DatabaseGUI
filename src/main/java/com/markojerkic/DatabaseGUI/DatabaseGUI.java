@@ -90,7 +90,7 @@ public class DatabaseGUI {
     // Subjects and years - the most basic categories by which the users will search the questions
     // The subjects are read from a local CSV file, while the years are stored in an array, at least for now
     private String[] subjects;
-    private String[] YEARS = new String[] {"2019./20.", "2018./19.", "2017./28."};
+    private String[] years;
 
     // Image state can be approved,disapprovedd and choosing
     // If an image is chosen than it is stored in chosenBufferedImage
@@ -100,7 +100,7 @@ public class DatabaseGUI {
     public DatabaseGUI() {
 
         // Read the available subjects from a local CSV file
-        subjects = getSubjects();
+        getSubjectsAndYears();
 
         // Getting the admin Firebase credentials as shown in official tutorial
         try {
@@ -195,9 +195,9 @@ public class DatabaseGUI {
         typeOfAnswerGroup = new ButtonGroup();
         ansABCD = new JRadioButton("ABCD");
         ansABCD.setMnemonic(KeyEvent.VK_1);
-        ansType = new JRadioButton("Nadopiši");
+        ansType = new JRadioButton("Nadopisi");
         ansType.setMnemonic(KeyEvent.VK_2);
-        ansLong = new JRadioButton("Produženi");
+        ansLong = new JRadioButton("Produzeni");
         ansLong.setMnemonic(KeyEvent.VK_3);
         typeOfAnswerGroup.add(ansABCD);
         typeOfAnswerGroup.add(ansType);
@@ -214,7 +214,7 @@ public class DatabaseGUI {
         yearLabel = new JLabel("Godina");
         // Combo boxes
         subjectComboBox = new JComboBox<>(subjects);
-        yearComboBox = new JComboBox<>(YEARS);
+        yearComboBox = new JComboBox<>(years);
 
         // Top panel is set in a grid bag layout
         GridBagLayout layoutTop = new GridBagLayout();
@@ -376,6 +376,7 @@ public class DatabaseGUI {
         // If the item is chosen, then the state field is switched to APPROVE and the frame is closed
         confirm.addActionListener(e -> {
             System.out.println("Approved");
+            picatureLabel.setText("Slika dodana");
             showImageState = ImageChooseState.APPROVED;
             imageFrame.dispose();
         });
@@ -406,29 +407,43 @@ public class DatabaseGUI {
         int height = img.getHeight();
         int width = img.getWidth();
         // Ratio of width to height which will be used to scale the image properly
-        double ratio = width / height;
+        double ratio = (float) width / (float) height;
         // New values for width and height which will be calculated
         int nWidth, nHeight;
-        nWidth = max;
-        nHeight = (int) (nWidth / ratio);
+        if (width >= height) {
+            nWidth = max;
+            nHeight = (int) (nWidth / ratio);
+        } else {
+            nHeight = max;
+            nWidth = (int) (nHeight * ratio);
+        }
 
         return new Dimension(nWidth, nHeight);
 
     }
 
-    private String[] getSubjects() {
-        String path = "C:\\Users\\marko\\Documents\\DatabaseGUIAdmin\\subjects.csv";
-        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+    private void getSubjectsAndYears() {
+        String subjectsPath = "C:\\Users\\marko\\Documents\\DatabaseGUIAdmin\\subjects.csv";
+        String yearsPath = "C:\\Users\\marko\\Documents\\DatabaseGUIAdmin\\years.csv";
+        try (BufferedReader reader = new BufferedReader(new FileReader(subjectsPath))) {
             String line = reader.readLine();
             if (line != null) {
                 String[] temp = line.split(",");
-                return temp;
+                this.subjects = temp;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return null;
+        try (BufferedReader reader = new BufferedReader(new FileReader(yearsPath))) {
+            String line = reader.readLine();
+            if (line != null) {
+                String[] temp = line.split(",");
+                this.years = temp;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -456,6 +471,7 @@ public class DatabaseGUI {
         answerBEntry.setText("");
         answerCEntry.setText("");
         answerDEntry.setText("");
+        picatureLabel.setText("");
         imageAdded = false;
         buttonGroup.clearSelection();
 

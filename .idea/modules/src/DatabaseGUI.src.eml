@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component inherit-compiler-output="true" inheritJdk="true">
+	<output-test url="file://$MODULE_DIR$/../../../out/test/DatabaseGUI.src"/>
+	<exclude-output/>
+	<contentEntry url="file://$MODULE_DIR$/../../../src">
+		<excludeFolder url="file://$MODULE_DIR$/../../../src/.gradle"/>
+		<excludeFolder url="file://$MODULE_DIR$/../../../src/build"/>
+	</contentEntry>
+</component>

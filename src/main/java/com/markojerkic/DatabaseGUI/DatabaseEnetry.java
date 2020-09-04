@@ -14,6 +14,7 @@ public class DatabaseEnetry {
     private int correctAns;
     private BufferedImage img;
     private int typeOfAnswer;
+    private String imgName;
 
     public DatabaseEnetry(String subject, String year, String question, String ansA, String ansB, String ansC,
                           String ansD, int correctAns, BufferedImage img, int typeOfAnswer) {
@@ -37,6 +38,10 @@ public class DatabaseEnetry {
         return this.question;
     }
 
+    public void setImg(String name) {
+        this.imgName = name;
+    }
+
     public HashMap<String, Object> toMap() {
         HashMap<String, Object> map = new HashMap<>();
         map.put("subject", this.subject);
@@ -47,9 +52,14 @@ public class DatabaseEnetry {
         map.put("ansC", this.ansC);
         map.put("ansD", this.ansD);
         map.put("correctAns", this.correctAns);
-        map.put("imageURI", this.img.toString());
+        if (imgName != null)
+            map.put("imageURI", this.imgName);
         map.put("typeOfAnswer", this.typeOfAnswer);
 
         return map;
+    }
+
+    public int getAns() {
+        return this.correctAns;
     }
 }
