@@ -16,7 +16,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DatabaseGUI {
@@ -75,6 +78,8 @@ public class DatabaseGUI {
     private JMenuItem exitMenuItem;
     private JMenuItem submitMenuItem;
     private JMenuItem addPhotoMenuItem;
+    private JMenuItem previousQuestionMenuItem;
+    private JMenuItem nextQuestionMeunItem;
 
     /*
     Type of answer - ABCD (multiple choice), type your answer and show your work
@@ -92,10 +97,19 @@ public class DatabaseGUI {
     private String[] subjects;
     private String[] years;
 
-    // Image state can be approved,disapprovedd and choosing
+    // Image state can be approved,disapproved and choosing
     // If an image is chosen than it is stored in chosenBufferedImage
     private ImageChooseState showImageState = ImageChooseState.CHOOSING;
     private BufferedImage chosenBufferedImage;
+
+    // Program can be in upload and download state
+    // When user uses keyboard shortcuts, using upload state we can determine if we want to read from database
+    // or use data already downloaded
+    private UploadState uploadState = UploadState.UPLOADING;
+
+    // List of question from the database
+    private ArrayList<DatabaseEnetry> databaseQuestions;
+    private int lastQuestionCounter = 0;
 
     public DatabaseGUI() {
 
@@ -140,20 +154,53 @@ public class DatabaseGUI {
             System.exit(0);
         });
 
-        // Submit enetry menu item
+        // Submit entry menu item
         submitMenuItem = new JMenuItem("Predaj");
         submitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.CTRL_MASK));
         submitMenuItem.addActionListener(e -> submit());
 
-        // Add photo menu intem
+        // Add photo menu item
         addPhotoMenuItem = new JMenuItem("Dodaj sliku");
         addPhotoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
         addPhotoMenuItem.addActionListener(e -> choosePhoto());
+
+        // Previous question menu item
+        previousQuestionMenuItem = new JMenuItem("Proslo pitanje");
+        previousQuestionMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.CTRL_MASK));
+        previousQuestionMenuItem.addActionListener(e -> {
+            if (uploadState == UploadState.UPLOADING) {
+                // Get chosen subject and year
+                String currSubject = getSubject();
+                String currYear = getYear();
+                // Read from database
+                try {
+                    // Remove previous values from list
+                    databaseQuestions = new ArrayList<>();
+                    // Query the database
+                    firestore.collection("pitanja").get()
+                            .get().getDocuments().stream()
+                            .filter(doc -> doc.get("year").toString().equals(getYear()) &&
+                                    doc.get("subject").toString().equals(getSubject()))
+                            .forEach(doc -> {
+                                databaseQuestions.add(new DatabaseEnetry(doc.getData(), doc.getId()));
+                                lastQuestionCounter++;
+                                System.out.println(lastQuestionCounter);
+                    });
+                    showPreviousQuestion();
+                    uploadState = UploadState.DOWNLOADING;
+                } catch (InterruptedException | ExecutionException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+            } else {
+                showPreviousQuestion();
+            }
+        });
 
         // Add menu items to the main menu
         mainMenu.add(submitMenuItem);
         mainMenu.add(addPhotoMenuItem);
         mainMenu.add(exitMenuItem);
+        mainMenu.add(previousQuestionMenuItem);
 
         // Label and text field for adding the question
         questionLabel = new JLabel("Pitanje");
@@ -322,6 +369,31 @@ public class DatabaseGUI {
         frame.add(panelBottom, BorderLayout.PAGE_END);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    private void showPreviousQuestion() {
+        if (databaseQuestions != null && lastQuestionCounter != 0) {
+            lastQuestionCounter--;
+            DatabaseEnetry de = databaseQuestions.get(lastQuestionCounter);
+
+            // Set all fields
+            questionEntry.setText(de.getQuestion());
+            answerAEntry.setText(de.getAnsA());
+            answerBEntry.setText(de.getAnsB());
+            answerCEntry.setText(de.getAnsC());
+            answerDEntry.setText(de.getAnsD());
+            switch (de.getTypeOfAnswer()) {
+                case 0 -> ansABCD.setSelected(true);
+                case 1 -> ansType.setSelected(true);
+                case 2 -> ansLong.setSelected(true);
+            }
+            switch (de.getCorrectAns()) {
+                case 0: ansARadio.setSelected(true);
+                case 1: ansBRadio.setSelected(true);
+                case 2: ansCRadio.setSelected(true);
+                case 3: ansDRadio.setSelected(true);
+            }
+        }
     }
 
     // Open a JFileChooser window in which the user will choose which picture he wants to upload
