@@ -31,7 +31,6 @@ public class DatabaseGUI {
     private final Bucket bucket;
 
     private final JFrame frame;
-    private JLabel label;
     private GridBagConstraints constraints;
 
     // Elements
@@ -48,14 +47,12 @@ public class DatabaseGUI {
     private final JLabel answerDLabel;
     private final JTextField answerDEntry;
     // Center panel
-    private final JButton addPicatureButton;
-    private final JLabel picatureLabel;
+    private final JButton addPictureButton;
+    private final JLabel pictureLabel;
     // Bottom panel
     private final JLabel subjectLabel;
-    private JTextField subjectEntry;
     private final JComboBox<String> subjectComboBox;
     private final JLabel yearLabel;
-    private JTextField yearEntry;
     private final JComboBox<String> yearComboBox;
 
     // Type of answer
@@ -78,7 +75,8 @@ public class DatabaseGUI {
     private final JMenuItem submitMenuItem;
     private final JMenuItem addPhotoMenuItem;
     private final JMenuItem previousQuestionMenuItem;
-    private JMenuItem nextQuestionMeunItem;
+    private final JMenuItem nextQuestionMenuItem;
+    private final JMenuItem cancelUpdateMenuItem;
 
     /*
     Type of answer - ABCD (multiple choice), type your answer and show your work
@@ -145,7 +143,7 @@ public class DatabaseGUI {
         mainMenu.setMnemonic(KeyEvent.VK_M);
         menuBar.add(mainMenu);
         // Exit button, accessed by the shortcut crt + Q
-        exitMenuItem = new JMenuItem("Exit");
+        exitMenuItem = new JMenuItem("Izlazak");
         exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
         exitMenuItem.addActionListener(e -> {
             // Shutdown the main frame and exit the java app
@@ -165,7 +163,7 @@ public class DatabaseGUI {
 
         // Previous question menu item
         previousQuestionMenuItem = new JMenuItem("Proslo pitanje");
-        previousQuestionMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.CTRL_MASK));
+        previousQuestionMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.ALT_MASK));
         previousQuestionMenuItem.addActionListener(e -> {
             if (uploadState == UploadState.UPLOADING) {
                 // Read from database
@@ -191,11 +189,33 @@ public class DatabaseGUI {
             }
         });
 
+        nextQuestionMenuItem = new JMenuItem("Sljedece pitanje");
+        nextQuestionMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, ActionEvent.ALT_MASK));
+        nextQuestionMenuItem.addActionListener(e -> {
+            if (uploadState == UploadState.DOWNLOADING) {
+                showNextQuestion();
+            }
+        });
+
+        // Change status to download so that when submitting it does not update value of the question,
+        // but it adds a new question
+        cancelUpdateMenuItem = new JMenuItem("Odustani od popravka");
+        cancelUpdateMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, ActionEvent.ALT_MASK));
+        cancelUpdateMenuItem.addActionListener(e -> {
+            if (uploadState == UploadState.DOWNLOADING) {
+                uploadState = UploadState.UPLOADING;
+            }
+        });
+
         // Add menu items to the main menu
         mainMenu.add(submitMenuItem);
+        mainMenu.add(new JSeparator());
         mainMenu.add(addPhotoMenuItem);
-        mainMenu.add(exitMenuItem);
         mainMenu.add(previousQuestionMenuItem);
+        mainMenu.add(nextQuestionMenuItem);
+        mainMenu.add(cancelUpdateMenuItem);
+        mainMenu.add(new JSeparator());
+        mainMenu.add(exitMenuItem);
 
         // Label and text field for adding the question
         questionLabel = new JLabel("Pitanje");
@@ -248,8 +268,8 @@ public class DatabaseGUI {
 
         // Label and button for adding a photo for the question
         // The photo can be used as the question or th answer
-        addPicatureButton = new JButton("Dodaj sliku");
-        picatureLabel = new JLabel();
+        addPictureButton = new JButton("Dodaj sliku");
+        pictureLabel = new JLabel();
 
         // Labels and combo boxes for choosing the year and the subject of the question
         subjectLabel = new JLabel("Predmet");
@@ -327,10 +347,10 @@ public class DatabaseGUI {
         JPanel panelAddPicature = new JPanel(layoutCenter);
         //panelAddPicature.add(picatureLabel);
 
-        addPicatureButton.addActionListener(e -> {
+        addPictureButton.addActionListener(e -> {
             choosePhoto();
         });
-        panelAddPicature.add(addPicatureButton);
+        panelAddPicature.add(addPictureButton);
 
         GridBagLayout layoutBottom = new GridBagLayout();
         JPanel panelBottom = new JPanel(layoutBottom);
@@ -355,15 +375,28 @@ public class DatabaseGUI {
         panelTop.setPreferredSize(new Dimension(500, 450));
         panelAddPicature.setBorder(new EmptyBorder(10, 10, 10, 10));
         panelBottom.setBorder(new EmptyBorder(10, 10, 10, 10));
-        picatureLabel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        pictureLabel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         frame.setJMenuBar(menuBar);
         frame.add(panelTop, BorderLayout.PAGE_START);
-        frame.add(picatureLabel, BorderLayout.LINE_START);
+        frame.add(pictureLabel, BorderLayout.LINE_START);
         frame.add(panelAddPicature, BorderLayout.LINE_END);
         frame.add(panelBottom, BorderLayout.PAGE_END);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    private void showNextQuestion() {
+        if (databaseQuestions != null && lastQuestionCounter < databaseQuestions.size()-1) {
+            lastQuestionCounter++;
+            DatabaseEnetry de = databaseQuestions.get(lastQuestionCounter);
+
+            // Set all fields
+            setFields(de);
+        } else {
+            uploadState = UploadState.UPLOADING;
+            lastQuestionCounter = 0;
+        }
     }
 
     private void showPreviousQuestion() {
@@ -372,23 +405,31 @@ public class DatabaseGUI {
             DatabaseEnetry de = databaseQuestions.get(lastQuestionCounter);
 
             // Set all fields
-            questionEntry.setText(de.getQuestion());
-            answerAEntry.setText(de.getAnsA());
-            answerBEntry.setText(de.getAnsB());
-            answerCEntry.setText(de.getAnsC());
-            answerDEntry.setText(de.getAnsD());
-            switch (de.getTypeOfAnswer()) {
-                case 0 -> ansABCD.setSelected(true);
-                case 1 -> ansType.setSelected(true);
-                case 2 -> ansLong.setSelected(true);
-            }
-            switch (de.getCorrectAns()) {
-                case 0: ansARadio.setSelected(true);
-                case 1: ansBRadio.setSelected(true);
-                case 2: ansCRadio.setSelected(true);
-                case 3: ansDRadio.setSelected(true);
-            }
+            setFields(de);
+        } else {
+            uploadState = UploadState.UPLOADING;
+            lastQuestionCounter = 0;
         }
+    }
+
+    private void setFields(DatabaseEnetry de) {
+        questionEntry.setText(de.getQuestion());
+        answerAEntry.setText(de.getAnsA());
+        answerBEntry.setText(de.getAnsB());
+        answerCEntry.setText(de.getAnsC());
+        answerDEntry.setText(de.getAnsD());
+        switch (de.getTypeOfAnswer()) {
+            case 0 -> ansABCD.setSelected(true);
+            case 1 -> ansType.setSelected(true);
+            case 2 -> ansLong.setSelected(true);
+        }
+        switch (de.getCorrectAns()) {
+            case 0: ansARadio.setSelected(true);
+            case 1: ansBRadio.setSelected(true);
+            case 2: ansCRadio.setSelected(true);
+            case 3: ansDRadio.setSelected(true);
+        }
+
     }
 
     // Open a JFileChooser window in which the user will choose which picture he wants to upload
@@ -443,7 +484,7 @@ public class DatabaseGUI {
         // If the item is chosen, then the state field is switched to APPROVE and the frame is closed
         confirm.addActionListener(e -> {
             System.out.println("Approved");
-            picatureLabel.setText("Slika dodana");
+            pictureLabel.setText("Slika dodana");
             showImageState = ImageChooseState.APPROVED;
             imageFrame.dispose();
         });
@@ -576,7 +617,7 @@ public class DatabaseGUI {
         answerBEntry.setText("");
         answerCEntry.setText("");
         answerDEntry.setText("");
-        picatureLabel.setText("");
+        pictureLabel.setText("");
         imageAdded = false;
         buttonGroup.clearSelection();
     }
