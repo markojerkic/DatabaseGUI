@@ -43,7 +43,7 @@ public class DatabaseEnetry {
         this.ansD = (String) map.get("ansD");
         this.correctAns = ((Long) map.get("correctAns")).intValue();
         try {
-            this.imgName = (String) map.get("imgURI");
+            this.imgName = (String) map.get("imageURI");
         } catch (Exception e) {
             e.printStackTrace();
         }

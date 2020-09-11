@@ -18,7 +18,6 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,58 +26,58 @@ public class DatabaseGUI {
     // Google Firebase variables
     private FileInputStream inputStream;
     private GoogleCredentials googleCredentials;
-    private FirebaseOptions firebaseOptions;
-    private Firestore firestore;
-    private Bucket bucket;
+    private final FirebaseOptions firebaseOptions;
+    private final Firestore firestore;
+    private final Bucket bucket;
 
-    private JFrame frame;
+    private final JFrame frame;
     private JLabel label;
     private GridBagConstraints constraints;
 
     // Elements
 
     // Top panel
-    private JLabel questionLabel;
-    private JTextField questionEntry;
-    private JLabel answerALabel;
-    private JTextField answerAEntry;
-    private JLabel answerBLabel;
-    private JTextField answerBEntry;
-    private JLabel answerCLabel;
-    private JTextField answerCEntry;
-    private JLabel answerDLabel;
-    private JTextField answerDEntry;
+    private final JLabel questionLabel;
+    private final JTextField questionEntry;
+    private final JLabel answerALabel;
+    private final JTextField answerAEntry;
+    private final JLabel answerBLabel;
+    private final JTextField answerBEntry;
+    private final JLabel answerCLabel;
+    private final JTextField answerCEntry;
+    private final JLabel answerDLabel;
+    private final JTextField answerDEntry;
     // Center panel
-    private JButton addPicatureButton;
-    private JLabel picatureLabel;
+    private final JButton addPicatureButton;
+    private final JLabel picatureLabel;
     // Bottom panel
-    private JLabel subjectLabel;
+    private final JLabel subjectLabel;
     private JTextField subjectEntry;
-    private JComboBox<String> subjectComboBox;
-    private JLabel yearLabel;
+    private final JComboBox<String> subjectComboBox;
+    private final JLabel yearLabel;
     private JTextField yearEntry;
-    private JComboBox<String> yearComboBox;
+    private final JComboBox<String> yearComboBox;
 
     // Type of answer
-    private ButtonGroup typeOfAnswerGroup;
-    private JRadioButton ansABCD;
-    private JRadioButton ansType;
-    private JRadioButton ansLong;
+    private final ButtonGroup typeOfAnswerGroup;
+    private final JRadioButton ansABCD;
+    private final JRadioButton ansType;
+    private final JRadioButton ansLong;
 
     // Answer buttons
-    private ButtonGroup buttonGroup;
-    private JRadioButton ansARadio;
-    private JRadioButton ansBRadio;
-    private JRadioButton ansCRadio;
-    private JRadioButton ansDRadio;
+    private final ButtonGroup buttonGroup;
+    private final JRadioButton ansARadio;
+    private final JRadioButton ansBRadio;
+    private final JRadioButton ansCRadio;
+    private final JRadioButton ansDRadio;
 
     // Menu variables
-    private JMenuBar menuBar;
-    private JMenu mainMenu;
-    private JMenuItem exitMenuItem;
-    private JMenuItem submitMenuItem;
-    private JMenuItem addPhotoMenuItem;
-    private JMenuItem previousQuestionMenuItem;
+    private final JMenuBar menuBar;
+    private final JMenu mainMenu;
+    private final JMenuItem exitMenuItem;
+    private final JMenuItem submitMenuItem;
+    private final JMenuItem addPhotoMenuItem;
+    private final JMenuItem previousQuestionMenuItem;
     private JMenuItem nextQuestionMeunItem;
 
     /*
@@ -145,7 +144,7 @@ public class DatabaseGUI {
         mainMenu = new JMenu("Menu");
         mainMenu.setMnemonic(KeyEvent.VK_M);
         menuBar.add(mainMenu);
-        // Exit button, accesed by the shortcut crt + Q
+        // Exit button, accessed by the shortcut crt + Q
         exitMenuItem = new JMenuItem("Exit");
         exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
         exitMenuItem.addActionListener(e -> {
@@ -169,9 +168,6 @@ public class DatabaseGUI {
         previousQuestionMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.CTRL_MASK));
         previousQuestionMenuItem.addActionListener(e -> {
             if (uploadState == UploadState.UPLOADING) {
-                // Get chosen subject and year
-                String currSubject = getSubject();
-                String currYear = getYear();
                 // Read from database
                 try {
                     // Remove previous values from list
@@ -184,7 +180,6 @@ public class DatabaseGUI {
                             .forEach(doc -> {
                                 databaseQuestions.add(new DatabaseEnetry(doc.getData(), doc.getId()));
                                 lastQuestionCounter++;
-                                System.out.println(lastQuestionCounter);
                     });
                     showPreviousQuestion();
                     uploadState = UploadState.DOWNLOADING;
@@ -520,12 +515,16 @@ public class DatabaseGUI {
     }
 
     private void submit() {
-        // Create an instance of the DataEntry class
-        DatabaseEnetry entry = new DatabaseEnetry(getSubject(), getYear(), questionEntry.getText(),
-                answerAEntry.getText(), answerBEntry.getText(), answerCEntry.getText(), answerDEntry.getText(),
-                getCorrectAns(), chosenBufferedImage, answerType);
-        // Get a hash map of the entry
-        HashMap<String, Object> map = entry.toMap();
+        if (uploadState == UploadState.DOWNLOADING) {
+            DatabaseEnetry updateQuestion = databaseQuestions.get(lastQuestionCounter);
+            updateQuestion(updateQuestion);
+        } else {
+            // Create an instance of the DataEntry class
+            DatabaseEnetry entry = new DatabaseEnetry(getSubject(), getYear(), questionEntry.getText(),
+                    answerAEntry.getText(), answerBEntry.getText(), answerCEntry.getText(), answerDEntry.getText(),
+                    getCorrectAns(), chosenBufferedImage, answerType);
+            // Get a hash map of the entry
+            HashMap<String, Object> map = entry.toMap();
 /*
         // Save chosen image as png
         if (showImageState == ImageChooseState.APPROVED && imageAdded) {
@@ -537,6 +536,40 @@ public class DatabaseGUI {
             }
         }*/
 
+
+            // Create an instance of swing worker which will upload the entry to the Firebase database
+            SwingWorkerUploader swingWorkerUploader = new SwingWorkerUploader(entry, firestore, bucket);
+            swingWorkerUploader.execute();
+
+            // Clear all the fields
+            resetFields();
+        }
+    }
+
+    private void updateQuestion(DatabaseEnetry updateQuestion) {
+        // Get id of question which you want to update
+        String id = updateQuestion.getId();
+        // Update all the fields
+        updateQuestion.setSubject(getSubject());
+        updateQuestion.setYear(getYear());
+        updateQuestion.setQuestion(questionEntry.getText());
+        updateQuestion.setAnsA(answerAEntry.getText());
+        updateQuestion.setAnsB(answerBEntry.getText());
+        updateQuestion.setAnsC(answerCEntry.getText());
+        updateQuestion.setAnsD(answerDEntry.getText());
+        updateQuestion.setCorrectAns(getCorrectAns());
+        updateQuestion.setTypeOfAnswer(answerType);
+        // Get instance of swing worker, execute the update
+        SwingWorkerUploader swingWorkerUploader = new SwingWorkerUploader(updateQuestion, firestore, true);
+        swingWorkerUploader.execute();
+        // Change state back to upload
+        uploadState = UploadState.UPLOADING;
+        // Reset all the fields
+        resetFields();
+
+    }
+
+    private void resetFields() {
         // Reset all the fields
         questionEntry.setText("");
         answerAEntry.setText("");
@@ -546,10 +579,6 @@ public class DatabaseGUI {
         picatureLabel.setText("");
         imageAdded = false;
         buttonGroup.clearSelection();
-
-        // Create an instance of swing worker which will upload the entry to the Firebase database
-        SwingWorkerUploader swingWorkerUploader = new SwingWorkerUploader(entry, firestore, bucket);
-        swingWorkerUploader.execute();
     }
 
     private String getYear() {
@@ -595,9 +624,7 @@ public class DatabaseGUI {
     }
 
 
-    public static void main(String args[]) {
-        System.out.println("Test");
-
+    public static void main(String[] args) {
         new DatabaseGUI();
 
     }
