@@ -55,6 +55,9 @@ public class DatabaseGUI {
     private final JLabel yearLabel;
     private final JComboBox<String> yearComboBox;
 
+    // Question number
+    private final JSpinner questionNumberJSpinner;
+
     // Type of answer
     private final ButtonGroup typeOfAnswerGroup;
     private final JRadioButton ansABCD;
@@ -354,20 +357,26 @@ public class DatabaseGUI {
 
         GridBagLayout layoutBottom = new GridBagLayout();
         JPanel panelBottom = new JPanel(layoutBottom);
+
+        // Choose question number
+        questionNumberJSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         constraints = getConstrains(0, 5, 1);
+        panelBottom.add(questionNumberJSpinner, constraints);
+
+        constraints = getConstrains(0, 6, 1);
         constraints.weightx = .5;
         panelBottom.add(subjectLabel, constraints);
 
-        constraints = getConstrains(1, 5, 1);
+        constraints = getConstrains(1, 6, 1);
         constraints.anchor = GridBagConstraints.PAGE_END;
         constraints.weightx = .5;
         panelBottom.add(yearLabel, constraints);
 
-        constraints = getConstrains(0, 6, 1);
+        constraints = getConstrains(0, 7, 1);
         constraints.weightx = .5;
         panelBottom.add(subjectComboBox, constraints);
 
-        constraints = getConstrains(1, 6, 1);
+        constraints = getConstrains(1, 7, 1);
         constraints.weightx = .5;
         panelBottom.add(yearComboBox, constraints);
 
@@ -418,6 +427,7 @@ public class DatabaseGUI {
         answerBEntry.setText(de.getAnsB());
         answerCEntry.setText(de.getAnsC());
         answerDEntry.setText(de.getAnsD());
+        questionNumberJSpinner.setValue(de.getQuestionNumber());
         switch (de.getTypeOfAnswer()) {
             case 0 -> ansABCD.setSelected(true);
             case 1 -> ansType.setSelected(true);
@@ -452,6 +462,7 @@ public class DatabaseGUI {
                 g2d.dispose();
 
                 ImageIcon icn = new ImageIcon(chosenBufferedImage);
+                System.out.println(chosenBufferedImage.getRaster().getDataBuffer().toString());
                 showImage(icn);
                 imageAdded = true;
                 imageURI = fc.getSelectedFile().getAbsolutePath();
@@ -563,7 +574,7 @@ public class DatabaseGUI {
             // Create an instance of the DataEntry class
             DatabaseEnetry entry = new DatabaseEnetry(getSubject(), getYear(), questionEntry.getText(),
                     answerAEntry.getText(), answerBEntry.getText(), answerCEntry.getText(), answerDEntry.getText(),
-                    getCorrectAns(), chosenBufferedImage, answerType);
+                    getCorrectAns(), chosenBufferedImage, answerType, (Integer) questionNumberJSpinner.getValue());
             // Get a hash map of the entry
             HashMap<String, Object> map = entry.toMap();
 /*
@@ -618,6 +629,7 @@ public class DatabaseGUI {
         answerCEntry.setText("");
         answerDEntry.setText("");
         pictureLabel.setText("");
+        questionNumberJSpinner.setValue((int) questionNumberJSpinner.getValue() + 1);
         imageAdded = false;
         buttonGroup.clearSelection();
     }

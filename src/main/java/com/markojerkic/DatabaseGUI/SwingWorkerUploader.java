@@ -82,7 +82,7 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
     private void uploadImage() throws IOException {
         // File to which the image will be outputed as png which will be uploaded
         imgName = createImageName();
-        File outputFile = new File("C:\\Users\\marko\\"+ imgName + ".png");
+        File outputFile = new File("C:\\Users\\marko\\Pictures\\databaseGUIImages\\"+ imgName + ".png");
         ImageIO.write(this.entry.getImg(), "png", outputFile);
 
         bucket.create(imgName + ".png", Files.readAllBytes(outputFile.toPath()));

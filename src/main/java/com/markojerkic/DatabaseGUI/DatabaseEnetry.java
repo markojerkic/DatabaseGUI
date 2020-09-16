@@ -18,9 +18,10 @@ public class DatabaseEnetry {
     private int typeOfAnswer;
     private String imgName;
     private String id;
+    private int questionNumber;
 
     public DatabaseEnetry(String subject, String year, String question, String ansA, String ansB, String ansC,
-                          String ansD, int correctAns, BufferedImage img, int typeOfAnswer) {
+                          String ansD, int correctAns, BufferedImage img, int typeOfAnswer, int questionNumber) {
         this.subject = subject;
         this.year = year;
         this.question = question;
@@ -31,6 +32,7 @@ public class DatabaseEnetry {
         this.correctAns = correctAns;
         this.img = img;
         this.typeOfAnswer = typeOfAnswer;
+        this.questionNumber = questionNumber;
     }
 
     public DatabaseEnetry(Map<String, Object> map, String id) {
@@ -49,6 +51,7 @@ public class DatabaseEnetry {
         }
         this.typeOfAnswer = ((Long) map.get("typeOfAnswer")).intValue();
         this.id = id;
+        this.questionNumber = ((Long) map.get("questionNumber")).intValue();
     }
 
     public BufferedImage getImg() {
@@ -72,6 +75,7 @@ public class DatabaseEnetry {
         map.put("ansB", this.ansB);
         map.put("ansC", this.ansC);
         map.put("ansD", this.ansD);
+        map.put("questionNumber", this.questionNumber);
         map.put("correctAns", this.correctAns);
         if (imgName != null)
             map.put("imageURI", this.imgName);
@@ -165,5 +169,13 @@ public class DatabaseEnetry {
 
     public String getId() {
         return id;
+    }
+
+    public int getQuestionNumber() {
+        return questionNumber;
+    }
+
+    public void setQuestionNumber(int questionNumber) {
+        this.questionNumber = questionNumber;
     }
 }
