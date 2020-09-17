@@ -15,8 +15,10 @@ public class DatabaseEnetry {
     private String ansD;
     private int correctAns;
     private BufferedImage img;
-    private int typeOfAnswer;
     private String imgName;
+    private BufferedImage ansImg;
+    private String ansImgName;
+    private int typeOfAnswer;
     private String id;
     private int questionNumber;
 
@@ -35,6 +37,23 @@ public class DatabaseEnetry {
         this.questionNumber = questionNumber;
     }
 
+    public DatabaseEnetry(String subject, String year, String question, String ansA, String ansB, String ansC,
+                          String ansD, int correctAns, BufferedImage img,
+                          int typeOfAnswer, int questionNumber, BufferedImage ansImg) {
+        this.subject = subject;
+        this.year = year;
+        this.question = question;
+        this.ansA = ansA;
+        this.ansB = ansB;
+        this.ansC = ansC;
+        this.ansD = ansD;
+        this.correctAns = correctAns;
+        this.img = img;
+        this.typeOfAnswer = typeOfAnswer;
+        this.questionNumber = questionNumber;
+        this.ansImg = ansImg;
+    }
+
     public DatabaseEnetry(Map<String, Object> map, String id) {
         this.subject = (String) map.get("subject");
         this.year = (String) map.get("year");
@@ -46,6 +65,11 @@ public class DatabaseEnetry {
         this.correctAns = ((Long) map.get("correctAns")).intValue();
         try {
             this.imgName = (String) map.get("imageURI");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            this.ansImgName = (String) map.get("ansImg");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -79,6 +103,8 @@ public class DatabaseEnetry {
         map.put("correctAns", this.correctAns);
         if (imgName != null)
             map.put("imageURI", this.imgName);
+        if (ansImgName != null)
+            map.put("ansImg", this.ansImgName);
         map.put("typeOfAnswer", this.typeOfAnswer);
 
         return map;
@@ -177,5 +203,21 @@ public class DatabaseEnetry {
 
     public void setQuestionNumber(int questionNumber) {
         this.questionNumber = questionNumber;
+    }
+
+    public BufferedImage getAnsImg() {
+        return ansImg;
+    }
+
+    public void setAnsImg(BufferedImage ansImg) {
+        this.ansImg = ansImg;
+    }
+
+    public String getAnsImgName() {
+        return ansImgName;
+    }
+
+    public void setAnsImgName(String ansImgName) {
+        this.ansImgName = ansImgName;
     }
 }

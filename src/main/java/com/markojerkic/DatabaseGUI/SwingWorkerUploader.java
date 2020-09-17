@@ -19,6 +19,7 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
     private final Firestore firestore;
     private Bucket bucket;
     private String imgName;
+    private String ansImgName;
 
     // If update, change value at id
     private boolean update = false;
@@ -48,11 +49,20 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
 
     private int addNewValue() {
         DocumentReference ref = firestore.collection("pitanja").document();
-
+        // Upload question image
         try {
             if (entry.getImg() != null) {
                 uploadImage();
                 entry.setImg(imgName);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // Upload answer image if exists
+        try {
+            if (entry.getAnsImg() != null) {
+                uploadAnswerImage();
+                entry.setAnsImgName(ansImgName);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -77,6 +87,16 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    private void uploadAnswerImage() throws IOException {
+        // File to which the image will be outputted as png which will be uploaded
+        ansImgName = "ans" + createImageName();
+        File outputFile = new File("C:\\Users\\marko\\Pictures\\databaseGUIImages\\"+ imgName + ".png");
+        ImageIO.write(this.entry.getAnsImg(), "png", outputFile);
+
+        bucket.create(ansImgName + ".png", Files.readAllBytes(outputFile.toPath()));
+
     }
 
     private void uploadImage() throws IOException {

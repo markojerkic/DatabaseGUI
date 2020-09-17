@@ -47,7 +47,8 @@ public class DatabaseGUI {
     private final JLabel answerDLabel;
     private final JTextField answerDEntry;
     // Center panel
-    private final JButton addPictureButton;
+    private final JButton addImageButton;
+    private final JButton addAnswerImageButton;
     private final JLabel pictureLabel;
     // Bottom panel
     private final JLabel subjectLabel;
@@ -101,6 +102,11 @@ public class DatabaseGUI {
     // If an image is chosen than it is stored in chosenBufferedImage
     private ImageChooseState showImageState = ImageChooseState.CHOOSING;
     private BufferedImage chosenBufferedImage;
+    // Answer image
+    private final ImageChooseState showAnswerImageState = ImageChooseState.CHOOSING;
+    private BufferedImage chosenBufferedAnswerImage;
+    // Arrays of images
+    private final BufferedImage[] bufferedImagesArray = new BufferedImage[]{chosenBufferedImage, chosenBufferedAnswerImage};
 
     // Program can be in upload and download state
     // When user uses keyboard shortcuts, using upload state we can determine if we want to read from database
@@ -162,7 +168,7 @@ public class DatabaseGUI {
         // Add photo menu item
         addPhotoMenuItem = new JMenuItem("Dodaj sliku");
         addPhotoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
-        addPhotoMenuItem.addActionListener(e -> choosePhoto());
+        addPhotoMenuItem.addActionListener(e -> choosePhoto(0));
 
         // Previous question menu item
         previousQuestionMenuItem = new JMenuItem("Proslo pitanje");
@@ -271,7 +277,8 @@ public class DatabaseGUI {
 
         // Label and button for adding a photo for the question
         // The photo can be used as the question or th answer
-        addPictureButton = new JButton("Dodaj sliku");
+        addImageButton = new JButton("Dodaj sliku");
+        addAnswerImageButton = new JButton("Dodaj sliku odgovora");
         pictureLabel = new JLabel();
 
         // Labels and combo boxes for choosing the year and the subject of the question
@@ -350,10 +357,14 @@ public class DatabaseGUI {
         JPanel panelAddPicature = new JPanel(layoutCenter);
         //panelAddPicature.add(picatureLabel);
 
-        addPictureButton.addActionListener(e -> {
-            choosePhoto();
+        addImageButton.addActionListener(e -> {
+            choosePhoto(0);
         });
-        panelAddPicature.add(addPictureButton);
+        addAnswerImageButton.addActionListener(e-> {
+            choosePhoto(1);
+        });
+        panelAddPicature.add(addImageButton);
+        panelAddPicature.add(addAnswerImageButton);
 
         GridBagLayout layoutBottom = new GridBagLayout();
         JPanel panelBottom = new JPanel(layoutBottom);
@@ -443,7 +454,8 @@ public class DatabaseGUI {
     }
 
     // Open a JFileChooser window in which the user will choose which picture he wants to upload
-    private void choosePhoto() {
+    // questionOrAnswerImage -> if 0 (question image), else (answer image)
+    private void choosePhoto(int questionOrAnswerImage) {
         JFileChooser fc = new JFileChooser(new File("c:\\Users\\Marko\\Pictures"));
         int returnVal = fc.showOpenDialog(frame);
 
@@ -454,15 +466,15 @@ public class DatabaseGUI {
                 Dimension dim = choosePhotoUploadDimensions(img, 1200);
                 // Resize the image
                 Image i = img.getScaledInstance(dim.width, dim.height, Image.SCALE_SMOOTH);
-                chosenBufferedImage = new BufferedImage(dim.width, dim.height,
+                bufferedImagesArray[questionOrAnswerImage] = new BufferedImage(dim.width, dim.height,
                 BufferedImage.TYPE_INT_RGB);
 
-                Graphics2D g2d = chosenBufferedImage.createGraphics();
+                Graphics2D g2d = bufferedImagesArray[questionOrAnswerImage].createGraphics();
                 g2d.drawImage(i, 0, 0, null);
                 g2d.dispose();
 
-                ImageIcon icn = new ImageIcon(chosenBufferedImage);
-                System.out.println(chosenBufferedImage.getRaster().getDataBuffer().toString());
+                ImageIcon icn = new ImageIcon(bufferedImagesArray[questionOrAnswerImage]);
+                System.out.println(bufferedImagesArray[questionOrAnswerImage].getRaster().getDataBuffer().toString());
                 showImage(icn);
                 imageAdded = true;
                 imageURI = fc.getSelectedFile().getAbsolutePath();
@@ -574,20 +586,10 @@ public class DatabaseGUI {
             // Create an instance of the DataEntry class
             DatabaseEnetry entry = new DatabaseEnetry(getSubject(), getYear(), questionEntry.getText(),
                     answerAEntry.getText(), answerBEntry.getText(), answerCEntry.getText(), answerDEntry.getText(),
-                    getCorrectAns(), chosenBufferedImage, answerType, (Integer) questionNumberJSpinner.getValue());
+                    getCorrectAns(), bufferedImagesArray[0], answerType,
+                    (Integer) questionNumberJSpinner.getValue(), bufferedImagesArray[1]);
             // Get a hash map of the entry
             HashMap<String, Object> map = entry.toMap();
-/*
-        // Save chosen image as png
-        if (showImageState == ImageChooseState.APPROVED && imageAdded) {
-            try {
-                ImageIO.write(chosenBufferedImage, "png", new File("slika.png"));
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }*/
-
 
             // Create an instance of swing worker which will upload the entry to the Firebase database
             SwingWorkerUploader swingWorkerUploader = new SwingWorkerUploader(entry, firestore, bucket);
