@@ -633,6 +633,8 @@ public class DatabaseGUI {
         pictureLabel.setText("");
         questionNumberJSpinner.setValue((int) questionNumberJSpinner.getValue() + 1);
         imageAdded = false;
+        bufferedImagesArray[0] = null;
+        bufferedImagesArray[1] = null;
         buttonGroup.clearSelection();
     }
 
