@@ -18,28 +18,18 @@ public class DatabaseEnetry {
     private String imgName;
     private BufferedImage ansImg;
     private String ansImgName;
+    private String superQuestion;
+    private BufferedImage superQuestionImage;
+    private String superQuestionImageName;
     private int typeOfAnswer;
     private String id;
     private int questionNumber;
-
-    public DatabaseEnetry(String subject, String year, String question, String ansA, String ansB, String ansC,
-                          String ansD, int correctAns, BufferedImage img, int typeOfAnswer, int questionNumber) {
-        this.subject = subject;
-        this.year = year;
-        this.question = question;
-        this.ansA = ansA;
-        this.ansB = ansB;
-        this.ansC = ansC;
-        this.ansD = ansD;
-        this.correctAns = correctAns;
-        this.img = img;
-        this.typeOfAnswer = typeOfAnswer;
-        this.questionNumber = questionNumber;
-    }
+    private boolean imgUploaded;
 
     public DatabaseEnetry(String subject, String year, String question, String ansA, String ansB, String ansC,
                           String ansD, int correctAns, BufferedImage img,
-                          int typeOfAnswer, int questionNumber, BufferedImage ansImg) {
+                          int typeOfAnswer, int questionNumber, BufferedImage ansImg,
+                          String superQuestion, BufferedImage superQuestionImage, boolean imgUploaded) {
         this.subject = subject;
         this.year = year;
         this.question = question;
@@ -52,6 +42,9 @@ public class DatabaseEnetry {
         this.typeOfAnswer = typeOfAnswer;
         this.questionNumber = questionNumber;
         this.ansImg = ansImg;
+        this.superQuestion = superQuestion;
+        this.superQuestionImage = superQuestionImage;
+        this.imgUploaded = imgUploaded;
     }
 
     public DatabaseEnetry(Map<String, Object> map, String id) {
@@ -105,6 +98,8 @@ public class DatabaseEnetry {
             map.put("imageURI", this.imgName);
         if (ansImgName != null)
             map.put("ansImg", this.ansImgName);
+        if (superQuestion != null) map.put("superQuestion", this.superQuestion);
+        if (superQuestionImageName != null) map.put("superQuestionImage", this.superQuestionImageName);
         map.put("typeOfAnswer", this.typeOfAnswer);
 
         return map;
@@ -219,5 +214,37 @@ public class DatabaseEnetry {
 
     public void setAnsImgName(String ansImgName) {
         this.ansImgName = ansImgName;
+    }
+
+    public String getSuperQuestion() {
+        return superQuestion;
+    }
+
+    public void setSuperQuestion(String superQuestion) {
+        this.superQuestion = superQuestion;
+    }
+
+    public BufferedImage getSuperQuestionImage() {
+        return superQuestionImage;
+    }
+
+    public void setSuperQuestionImage(BufferedImage superQuestionImage) {
+        this.superQuestionImage = superQuestionImage;
+    }
+
+    public String getSuperQuestionImageName() {
+        return superQuestionImageName;
+    }
+
+    public void setSuperQuestionImageName(String superQuestionImageName) {
+        this.superQuestionImageName = superQuestionImageName;
+    }
+
+    public boolean isImgUploaded() {
+        return imgUploaded;
+    }
+
+    public void setImgUploaded(boolean imgUploaded) {
+        this.imgUploaded = imgUploaded;
     }
 }

@@ -46,10 +46,15 @@ public class DatabaseGUI {
     private final JTextField answerCEntry;
     private final JLabel answerDLabel;
     private final JTextField answerDEntry;
+    // Super question - top level question that can have little questions
+    private final JLabel superQuestionLabel;
+    private final JTextField superQuestionEntry;
     // Center panel
     private final JButton addImageButton;
     private final JButton addAnswerImageButton;
+    private final JButton addSuperQuestionImage;
     private final JLabel pictureLabel;
+    private final JButton removeSuperQuestion;
     // Bottom panel
     private final JLabel subjectLabel;
     private final JComboBox<String> subjectComboBox;
@@ -101,12 +106,12 @@ public class DatabaseGUI {
     // Image state can be approved,disapproved and choosing
     // If an image is chosen than it is stored in chosenBufferedImage
     private ImageChooseState showImageState = ImageChooseState.CHOOSING;
-    private BufferedImage chosenBufferedImage;
-    // Answer image
-    private final ImageChooseState showAnswerImageState = ImageChooseState.CHOOSING;
-    private BufferedImage chosenBufferedAnswerImage;
     // Arrays of images
-    private final BufferedImage[] bufferedImagesArray = new BufferedImage[]{chosenBufferedImage, chosenBufferedAnswerImage};
+    // [0] - question image
+    // [1] - answer image
+    // [2] - super question
+    private final BufferedImage[] bufferedImagesArray = new BufferedImage[3];
+    private boolean imageUploaded = false;
 
     // Program can be in upload and download state
     // When user uses keyboard shortcuts, using upload state we can determine if we want to read from database
@@ -239,6 +244,9 @@ public class DatabaseGUI {
         answerCEntry = new JTextField();
         answerDLabel = new JLabel("Odgovor D");
         answerDEntry = new JTextField();
+        // Super question
+        superQuestionLabel = new JLabel("Nadpitanje");
+        superQuestionEntry = new JTextField();
 
         // Button group for choosing the correct answer
         // Each button has been asigned a keyboard shortcut
@@ -279,6 +287,8 @@ public class DatabaseGUI {
         // The photo can be used as the question or th answer
         addImageButton = new JButton("Dodaj sliku");
         addAnswerImageButton = new JButton("Dodaj sliku odgovora");
+        addSuperQuestionImage = new JButton("Dodaj nad sliku");
+        removeSuperQuestion = new JButton("Ukloni nadpitanje");
         pictureLabel = new JLabel();
 
         // Labels and combo boxes for choosing the year and the subject of the question
@@ -323,13 +333,15 @@ public class DatabaseGUI {
         ansABCDPanel.add(answerCEntry, getConstrains(0, 5, 2));
         ansABCDPanel.add(answerDLabel, getConstrains(0, 6, 1));
         ansABCDPanel.add(answerDEntry, getConstrains(0, 7, 2));
+        ansABCDPanel.add(superQuestionLabel, getConstrains(0, 8, 1));
+        ansABCDPanel.add(superQuestionEntry, getConstrains(0, 9, 2));
 
         JPanel radioGrid = new JPanel(new GridLayout(1, 4));
         radioGrid.add(ansARadio);
         radioGrid.add(ansBRadio);
         radioGrid.add(ansCRadio);
         radioGrid.add(ansDRadio);
-        ansABCDPanel.add(radioGrid, getConstrains(0, 8, 2));
+        ansABCDPanel.add(radioGrid, getConstrains(0, 10, 2));
 
         constraints = getConstrains(0, 3, 2);
         constraints.gridheight = 9;
@@ -363,8 +375,19 @@ public class DatabaseGUI {
         addAnswerImageButton.addActionListener(e-> {
             choosePhoto(1);
         });
-        panelAddPicature.add(addImageButton);
+        addSuperQuestionImage.addActionListener(e -> {
+            choosePhoto(2);
+        });
+        // Remove the super question, set all parameters to null
+        removeSuperQuestion.addActionListener(e -> {
+            superQuestionEntry.setText("");
+            bufferedImagesArray[2] = null;
+            imageUploaded = false;
+        });
+        panelAddPicature.add(removeSuperQuestion);
+        panelAddPicature.add(addSuperQuestionImage);
         panelAddPicature.add(addAnswerImageButton);
+        panelAddPicature.add(addImageButton);
 
         GridBagLayout layoutBottom = new GridBagLayout();
         JPanel panelBottom = new JPanel(layoutBottom);
@@ -587,13 +610,17 @@ public class DatabaseGUI {
             DatabaseEnetry entry = new DatabaseEnetry(getSubject(), getYear(), questionEntry.getText(),
                     answerAEntry.getText(), answerBEntry.getText(), answerCEntry.getText(), answerDEntry.getText(),
                     getCorrectAns(), bufferedImagesArray[0], answerType,
-                    (Integer) questionNumberJSpinner.getValue(), bufferedImagesArray[1]);
+                    (Integer) questionNumberJSpinner.getValue(), bufferedImagesArray[1],
+                    superQuestionEntry.getText(), bufferedImagesArray[2], imageUploaded);
             // Get a hash map of the entry
             HashMap<String, Object> map = entry.toMap();
 
             // Create an instance of swing worker which will upload the entry to the Firebase database
             SwingWorkerUploader swingWorkerUploader = new SwingWorkerUploader(entry, firestore, bucket);
             swingWorkerUploader.execute();
+            // If super image added, change imgUploaded to true, so that it is not uploaded twice
+            if (bufferedImagesArray[2] != null)
+                imageUploaded = true;
 
             // Clear all the fields
             resetFields();

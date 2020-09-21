@@ -20,6 +20,7 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
     private Bucket bucket;
     private String imgName;
     private String ansImgName;
+    private String superImgName;
 
     // If update, change value at id
     private boolean update = false;
@@ -68,10 +69,22 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
             e.printStackTrace();
         }
 
+        // Super question image
+        try {
+            if (entry.getSuperQuestionImage() != null && !entry.isImgUploaded()) {
+                uploadSuperImage();
+                entry.setSuperQuestionImageName(superImgName);
+            } else if (entry.getSuperQuestionImage() != null && entry.isImgUploaded())
+                entry.setSuperQuestionImageName(createSuperImageName());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         ApiFuture<WriteResult> result = ref.set(entry.toMap());
         return printSuccessful(result);
 
     }
+
 
     private int update() {
         DocumentReference ref = firestore.collection("pitanja").document(entry.getId());
@@ -99,6 +112,15 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
 
     }
 
+    private void uploadSuperImage() throws IOException {
+        // Super question image
+        superImgName = createSuperImageName();
+        File outputFile = new File("C:\\Users\\marko\\Pictures\\databaseGUIImages\\"+ superImgName + ".png");
+        ImageIO.write(this.entry.getSuperQuestionImage(), "png", outputFile);
+
+        bucket.create(superImgName + ".png", Files.readAllBytes(outputFile.toPath()));
+    }
+
     private void uploadImage() throws IOException {
         // File to which the image will be outputed as png which will be uploaded
         imgName = createImageName();
@@ -108,6 +130,13 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
         bucket.create(imgName + ".png", Files.readAllBytes(outputFile.toPath()));
     }
 
+    private String createSuperImageName(){
+        return "super" + this.entry.getSuperQuestion().split(" ").length +
+                this.entry.getQuestion().length()
+                + this.entry.getQuestion().split(" ")[0]
+                + this.entry.getAns();
+
+    }
     private String createImageName() {
         return String.valueOf(this.entry.getQuestion().split(" ").length) +
                 this.entry.getQuestion().length()
