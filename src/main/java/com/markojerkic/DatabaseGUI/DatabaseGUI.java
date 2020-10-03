@@ -145,7 +145,7 @@ public class DatabaseGUI {
         bucket = StorageClient.getInstance().bucket();
 
         // Setting the main frame
-        frame = new JFrame("Test");
+        frame = new JFrame("Maturalac");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // The top pannel
@@ -167,7 +167,7 @@ public class DatabaseGUI {
 
         // Submit entry menu item
         submitMenuItem = new JMenuItem("Predaj");
-        submitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.CTRL_MASK));
+        submitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
         submitMenuItem.addActionListener(e -> submit());
 
         // Add photo menu item
