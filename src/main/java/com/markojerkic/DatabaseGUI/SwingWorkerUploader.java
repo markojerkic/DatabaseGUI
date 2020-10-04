@@ -133,7 +133,8 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
     private String createSuperImageName(){
         return "super" + this.entry.getSuperQuestion().split(" ").length +
                 this.entry.getSuperQuestion().length()
-                + this.entry.getSuperQuestion().split(" ")[0];
+                + this.entry.getSuperQuestion().split(" ")[0]
+                + this.entry.getSuperQuestion().split(" ")[this.entry.getSuperQuestion().length() - 1];
 
     }
     private String createImageName() {
