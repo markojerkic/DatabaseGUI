@@ -17,7 +17,6 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -112,6 +111,7 @@ public class DatabaseGUI {
     // [2] - super question
     private final BufferedImage[] bufferedImagesArray = new BufferedImage[3];
     private boolean imageUploaded = false;
+    private String uploadedSuperImageName;
 
     // Program can be in upload and download state
     // When user uses keyboard shortcuts, using upload state we can determine if we want to read from database
@@ -383,6 +383,7 @@ public class DatabaseGUI {
             superQuestionEntry.setText("");
             bufferedImagesArray[2] = null;
             imageUploaded = false;
+            uploadedSuperImageName = null;
         });
         panelAddPicature.add(removeSuperQuestion);
         panelAddPicature.add(addSuperQuestionImage);
@@ -612,15 +613,20 @@ public class DatabaseGUI {
                     getCorrectAns(), bufferedImagesArray[0], answerType,
                     (Integer) questionNumberJSpinner.getValue(), bufferedImagesArray[1],
                     superQuestionEntry.getText(), bufferedImagesArray[2], imageUploaded);
-            // Get a hash map of the entry
-            HashMap<String, Object> map = entry.toMap();
+
+            // If super image added, change imgUploaded to true, so that it is not uploaded twice
+            if (bufferedImagesArray[2] != null) {
+                imageUploaded = true;
+                if (uploadedSuperImageName != null) {
+                    entry.setSuperImageName(uploadedSuperImageName);
+                } else {
+                    uploadedSuperImageName = entry.createSuperImageName();
+                }
+            }
 
             // Create an instance of swing worker which will upload the entry to the Firebase database
             SwingWorkerUploader swingWorkerUploader = new SwingWorkerUploader(entry, firestore, bucket);
             swingWorkerUploader.execute();
-            // If super image added, change imgUploaded to true, so that it is not uploaded twice
-            if (bufferedImagesArray[2] != null)
-                imageUploaded = true;
 
             // Clear all the fields
             resetFields();

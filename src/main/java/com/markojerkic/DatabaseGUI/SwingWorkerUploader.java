@@ -73,9 +73,7 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
         try {
             if (entry.getSuperQuestionImage() != null && !entry.isImgUploaded()) {
                 uploadSuperImage();
-                entry.setSuperQuestionImageName(superImgName);
-            } else if (entry.getSuperQuestionImage() != null && entry.isImgUploaded())
-                entry.setSuperQuestionImageName(createSuperImageName());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -104,7 +102,7 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
 
     private void uploadAnswerImage() throws IOException {
         // File to which the image will be outputted as png which will be uploaded
-        ansImgName = "ans" + createImageName();
+        ansImgName = "ans" + entry.createImageName();
         File outputFile = new File("C:\\Users\\marko\\Pictures\\databaseGUIImages\\"+ imgName + ".png");
         ImageIO.write(this.entry.getAnsImg(), "png", outputFile);
 
@@ -114,7 +112,7 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
 
     private void uploadSuperImage() throws IOException {
         // Super question image
-        superImgName = createSuperImageName();
+        superImgName = entry.createSuperImageName();
         File outputFile = new File("C:\\Users\\marko\\Pictures\\databaseGUIImages\\"+ superImgName + ".png");
         ImageIO.write(this.entry.getSuperQuestionImage(), "png", outputFile);
 
@@ -123,25 +121,11 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
 
     private void uploadImage() throws IOException {
         // File to which the image will be outputed as png which will be uploaded
-        imgName = createImageName();
+        imgName = entry.createImageName();
         File outputFile = new File("C:\\Users\\marko\\Pictures\\databaseGUIImages\\"+ imgName + ".png");
         ImageIO.write(this.entry.getImg(), "png", outputFile);
 
         bucket.create(imgName + ".png", Files.readAllBytes(outputFile.toPath()));
-    }
-
-    private String createSuperImageName(){
-        return "super" + this.entry.getSuperQuestion().split(" ").length +
-                this.entry.getSuperQuestion().length()
-                + this.entry.getSuperQuestion().split(" ")[0]
-                + this.entry.getSuperQuestion().split(" ")[this.entry.getSuperQuestion().length() - 1];
-
-    }
-    private String createImageName() {
-        return String.valueOf(this.entry.getQuestion().split(" ").length) +
-                this.entry.getQuestion().length()
-                + this.entry.getQuestion().split(" ")[0]
-                + this.entry.getAns();
     }
 
     @Override

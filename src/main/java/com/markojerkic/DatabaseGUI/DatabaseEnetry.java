@@ -3,6 +3,7 @@ package com.markojerkic.DatabaseGUI;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class DatabaseEnetry {
 
@@ -25,6 +26,9 @@ public class DatabaseEnetry {
     private String id;
     private int questionNumber;
     private boolean imgUploaded;
+    private String superImageName;
+    private String imageName;
+    private String ansImageName;
 
     public DatabaseEnetry(String subject, String year, String question, String ansA, String ansB, String ansC,
                           String ansD, int correctAns, BufferedImage img,
@@ -246,5 +250,62 @@ public class DatabaseEnetry {
 
     public void setImgUploaded(boolean imgUploaded) {
         this.imgUploaded = imgUploaded;
+    }
+
+
+
+    public String createSuperImageName(){
+        if (superImageName == null) {
+            superImageName = "super" + this.getSuperQuestion().split(" ").length +
+                    this.getSuperQuestion().length()
+                    + this.getSuperQuestion().split(" ")[0]
+                    + this.getSuperQuestion().split(" ")[this.getSuperQuestion().split(" ").length - 1]
+                    + randNameInt();
+            setSuperQuestionImageName(superImageName);
+        }
+        return superImageName;
+    }
+
+    public String createImageName() {
+        if (imageName == null) {
+            return String.valueOf(this.getQuestion().split(" ").length) +
+                    this.getQuestion().length()
+                    + this.getQuestion().split(" ")[0]
+                    + this.getAns()
+                    + randNameInt();
+        }
+        return imageName;
+    }
+
+
+
+    private String randNameInt() {
+        Random rand = new Random();
+        return String.valueOf(rand.nextInt());
+    }
+
+    public String getSuperImageName() {
+        return superImageName;
+    }
+
+    public void setSuperImageName(String superImageName) {
+        this.superImageName = superImageName;
+        setSuperQuestionImageName(superImageName);
+    }
+
+    public String getImageName() {
+        return imageName;
+    }
+
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
+    }
+
+    public String getAnsImageName() {
+        return ansImageName;
+    }
+
+    public void setAnsImageName(String ansImageName) {
+        this.ansImageName = ansImageName;
     }
 }
