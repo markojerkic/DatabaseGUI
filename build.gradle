@@ -2,8 +2,8 @@ plugins {
     id 'java'
 }
 
-group 'org.example'
-version '1.0-SNAPSHOT'
+group 'com.markojerkic'
+version '1.0'
 
 repositories {
     mavenCentral()
@@ -18,6 +18,6 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'com.markojerkic.DatabaseGUI.DatabaseGUI'
+        attributes ('Main-Class': 'com.markojerkic.DatabaseGUI.DatabaseGUI')
     }
 }
