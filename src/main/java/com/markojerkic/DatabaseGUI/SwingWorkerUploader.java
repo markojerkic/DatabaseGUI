@@ -21,6 +21,7 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
     private String imgName;
     private String ansImgName;
     private String superImgName;
+    private String audioName;
 
     // If update, change value at id
     private boolean update = false;
@@ -78,9 +79,24 @@ class SwingWorkerUploader extends SwingWorker<Integer, String> {
             e.printStackTrace();
         }
 
+        // Audio file
+        try {
+            if (entry.getAudioFile() != null && !entry.isAudioUploaded()) {
+                uploadAudio();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         ApiFuture<WriteResult> result = ref.set(entry.toMap());
         return printSuccessful(result);
 
+    }
+
+    private void uploadAudio() throws IOException {
+        audioName = entry.getAudioName();
+        File file = entry.getAudioFile();
+        bucket.create(audioName + ".mp3", Files.readAllBytes(file.toPath()));
     }
 
 

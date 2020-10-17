@@ -54,6 +54,7 @@ public class DatabaseGUI {
     private final JButton addSuperQuestionImage;
     private final JLabel pictureLabel;
     private final JButton removeSuperQuestion;
+    private final JButton addAudio;
     // Bottom panel
     private final JLabel subjectLabel;
     private final JComboBox<String> subjectComboBox;
@@ -112,6 +113,9 @@ public class DatabaseGUI {
     private final BufferedImage[] bufferedImagesArray = new BufferedImage[3];
     private boolean imageUploaded = false;
     private String uploadedSuperImageName;
+    private File audio;
+    private boolean audioUploaded = false;
+    private String uploadedAudioName;
 
     // Program can be in upload and download state
     // When user uses keyboard shortcuts, using upload state we can determine if we want to read from database
@@ -290,6 +294,7 @@ public class DatabaseGUI {
         addSuperQuestionImage = new JButton("Dodaj nad sliku");
         removeSuperQuestion = new JButton("Ukloni nadpitanje");
         pictureLabel = new JLabel();
+        addAudio = new JButton("Dodaj audio");
 
         // Labels and combo boxes for choosing the year and the subject of the question
         subjectLabel = new JLabel("Predmet");
@@ -378,14 +383,20 @@ public class DatabaseGUI {
         addSuperQuestionImage.addActionListener(e -> {
             choosePhoto(2);
         });
+        addAudio.addActionListener(e -> {
+            choosePhoto(3);
+        });
         // Remove the super question, set all parameters to null
         removeSuperQuestion.addActionListener(e -> {
             superQuestionEntry.setText("");
             bufferedImagesArray[2] = null;
             imageUploaded = false;
             uploadedSuperImageName = null;
+            uploadedAudioName = null;
+            audioUploaded = false;
         });
         panelAddPicature.add(removeSuperQuestion);
+        panelAddPicature.add(addAudio);
         panelAddPicature.add(addSuperQuestionImage);
         panelAddPicature.add(addAnswerImageButton);
         panelAddPicature.add(addImageButton);
@@ -480,6 +491,22 @@ public class DatabaseGUI {
     // Open a JFileChooser window in which the user will choose which picture he wants to upload
     // questionOrAnswerImage -> if 0 (question image), else (answer image)
     private void choosePhoto(int questionOrAnswerImage) {
+
+        // Check if file is audio or image
+        if (questionOrAnswerImage == 3) {
+            JFileChooser fc = new JFileChooser(new File("c:\\Users\\Marko\\Pictures"));
+            if (fc.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    audio = fc.getSelectedFile();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    return;
+                }
+
+            }
+        }
+
         JFileChooser fc = new JFileChooser(new File("c:\\Users\\Marko\\Pictures"));
         int returnVal = fc.showOpenDialog(frame);
 
@@ -612,7 +639,7 @@ public class DatabaseGUI {
                     answerAEntry.getText(), answerBEntry.getText(), answerCEntry.getText(), answerDEntry.getText(),
                     getCorrectAns(), bufferedImagesArray[0], answerType,
                     (Integer) questionNumberJSpinner.getValue(), bufferedImagesArray[1],
-                    superQuestionEntry.getText(), bufferedImagesArray[2], imageUploaded);
+                    superQuestionEntry.getText(), bufferedImagesArray[2], imageUploaded, audio, audioUploaded);
 
             // If super image added, change imgUploaded to true, so that it is not uploaded twice
             if (bufferedImagesArray[2] != null) {
@@ -621,6 +648,17 @@ public class DatabaseGUI {
                     entry.setSuperImageName(uploadedSuperImageName);
                 } else {
                     uploadedSuperImageName = entry.createSuperImageName();
+                }
+            }
+            // Check if audio file is uploaded or added
+            if (audio != null) {
+                audioUploaded = true;
+                if (audioUploaded) {
+                    if (uploadedAudioName != null) {
+                        entry.setAudioName(uploadedAudioName);
+                    } else {
+                        uploadedAudioName = entry.getAudioName();
+                    }
                 }
             }
 

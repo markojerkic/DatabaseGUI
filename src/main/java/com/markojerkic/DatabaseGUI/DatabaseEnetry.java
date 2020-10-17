@@ -1,6 +1,7 @@
 package com.markojerkic.DatabaseGUI;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -29,11 +30,15 @@ public class DatabaseEnetry {
     private String superImageName;
     private String imageName;
     private String ansImageName;
+    private File audioFile;
+    private boolean audioUploaded;
+    private String audioName;
 
     public DatabaseEnetry(String subject, String year, String question, String ansA, String ansB, String ansC,
                           String ansD, int correctAns, BufferedImage img,
                           int typeOfAnswer, int questionNumber, BufferedImage ansImg,
-                          String superQuestion, BufferedImage superQuestionImage, boolean imgUploaded) {
+                          String superQuestion, BufferedImage superQuestionImage, boolean imgUploaded,
+                          File audio, boolean audioUploaded) {
         this.subject = subject;
         this.year = year;
         this.question = question;
@@ -49,6 +54,8 @@ public class DatabaseEnetry {
         this.superQuestion = superQuestion;
         this.superQuestionImage = superQuestionImage;
         this.imgUploaded = imgUploaded;
+        this.audioFile = audio;
+        this.audioUploaded = audioUploaded;
     }
 
     public DatabaseEnetry(Map<String, Object> map, String id) {
@@ -104,6 +111,7 @@ public class DatabaseEnetry {
             map.put("ansImg", this.ansImgName);
         if (superQuestion != null) map.put("superQuestion", this.superQuestion);
         if (superQuestionImageName != null) map.put("superQuestionImage", this.superQuestionImageName);
+        if (audioName != null) map.put("audioName", this.audioName);
         map.put("typeOfAnswer", this.typeOfAnswer);
 
         return map;
@@ -307,5 +315,31 @@ public class DatabaseEnetry {
 
     public void setAnsImageName(String ansImageName) {
         this.ansImageName = ansImageName;
+    }
+
+    public File getAudioFile() {
+        return audioFile;
+    }
+
+    public void setAudioFile(File audioFile) {
+        this.audioFile = audioFile;
+    }
+
+    public boolean isAudioUploaded() {
+        return audioUploaded;
+    }
+
+    public void setAudioUploaded(boolean audioUploaded) {
+        this.audioUploaded = audioUploaded;
+    }
+
+    public String getAudioName() {
+        if (this.audioName == null)
+            this.audioName = audioFile.getName()+ randNameInt();
+        return this.audioName;
+    }
+
+    public void setAudioName(String audioName) {
+        this.audioName = audioName;
     }
 }
