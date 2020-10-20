@@ -513,8 +513,8 @@ public class DatabaseGUI {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             System.out.println(fc.getSelectedFile().getName());
             try {
-                BufferedImage img = ImageIO.read(fc.getSelectedFile());
-                Dimension dim = choosePhotoUploadDimensions(img, 1200);
+                bufferedImagesArray[questionOrAnswerImage] = ImageIO.read(fc.getSelectedFile());
+                /*Dimension dim = choosePhotoUploadDimensions(img, 1200);
                 // Resize the image
                 Image i = img.getScaledInstance(dim.width, dim.height, Image.SCALE_SMOOTH);
                 bufferedImagesArray[questionOrAnswerImage] = new BufferedImage(dim.width, dim.height,
@@ -522,7 +522,7 @@ public class DatabaseGUI {
 
                 Graphics2D g2d = bufferedImagesArray[questionOrAnswerImage].createGraphics();
                 g2d.drawImage(i, 0, 0, null);
-                g2d.dispose();
+                g2d.dispose();*/
 
                 ImageIcon icn = new ImageIcon(bufferedImagesArray[questionOrAnswerImage]);
                 System.out.println(bufferedImagesArray[questionOrAnswerImage].getRaster().getDataBuffer().toString());
